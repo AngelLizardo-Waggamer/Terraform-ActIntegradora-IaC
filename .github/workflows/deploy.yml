@@ -27,6 +27,17 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     # --- 1. Provision infrastructure (ensures ECR repo exists before push) ---
+    - name: Bootstrap Terraform State Bucket
+      run: |
+        if ! aws s3api head-bucket --bucket iac-infra-tfstate-bucket 2>/dev/null; then
+          echo "Creating Terraform state bucket..."
+          aws s3api create-bucket --bucket iac-infra-tfstate-bucket --region ${{ env.AWS_REGION }}
+          aws s3api put-bucket-versioning --bucket iac-infra-tfstate-bucket \
+            --versioning-configuration Status=Enabled
+        else
+          echo "State bucket already exists."
+        fi
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
