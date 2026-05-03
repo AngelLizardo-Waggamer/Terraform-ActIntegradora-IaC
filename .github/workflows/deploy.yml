@@ -26,6 +26,26 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    # --- 1. Provision infrastructure (ensures ECR repo exists before push) ---
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      working-directory: infra
+      run: terraform init
+
+    - name: Terraform Apply
+      working-directory: infra
+      run: terraform apply -auto-approve
+
+    - name: Obtener outputs de Terraform
+      working-directory: infra
+      run: |
+        echo "RDS_ENDPOINT=$(terraform output -raw rds_endpoint)" >> $GITHUB_ENV
+
+    # --- 2. Build and push Docker image ---
     - name: Login en Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
@@ -39,12 +59,7 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-    - name: Obtener outputs de Terraform
-      working-directory: infra
-      run: |
-        terraform init
-        echo "RDS_ENDPOINT=$(terraform output -raw rds_endpoint)" >> $GITHUB_ENV
-
+    # --- 3. Deploy to EKS ---
     - name: Actualizar KubeConfig de EKS
       run: |
         aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
