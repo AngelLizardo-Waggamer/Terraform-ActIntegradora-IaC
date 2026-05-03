@@ -55,3 +55,8 @@ module "s3" {
   source      = "./modules/s3"
   bucket_name = var.s3_bucket_name
 }
+
+module "ecr" {
+  source          = "./modules/ecr"
+  repository_name = "${var.project_name}-repo"
+}

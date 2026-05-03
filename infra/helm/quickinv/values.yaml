@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: tu-cuenta.dkr.ecr.us-east-1.amazonaws.com/quickinv-repo
+  repository: ""  # Overridden at deploy time via --set (from ECR login output)
   pullPolicy: IfNotPresent
   tag: "latest"
 
@@ -19,7 +19,7 @@ resources:
 
 # Variables de entorno para conectar con RDS
 env:
-  DB_HOST: "tu-rds-endpoint.us-east-1.rds.amazonaws.com"
+  DB_HOST: ""       # Overridden at deploy time via --set (from terraform output)
   DB_NAME: "appdb"
   DB_USER: "appuser"
-  DB_PASSWORD: "postgresiac25"
+  DB_PASSWORD: ""   # Overridden at deploy time via --set (from GitHub Secret)
