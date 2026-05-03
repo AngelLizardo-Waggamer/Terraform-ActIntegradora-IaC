@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickInv - IaC Infrastructure</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #e2e8f0;
+    }
+
+    .container {
+      text-align: center;
+      padding: 3rem;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 1.5rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      max-width: 520px;
+    }
+
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 2rem;
+      color: #4ade80;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+    }
+
+    .status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .info {
+      display: grid;
+      gap: 0.75rem;
+      text-align: left;
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .info-row .label { color: #64748b; }
+    .info-row .value { color: #cbd5e1; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📦</div>
+    <h1>QuickInv</h1>
+    <p class="subtitle">IaC Infrastructure — Deployed on EKS</p>
+    <div class="status">Running</div>
+    <div class="info">
+      <div class="info-row">
+        <span class="label">Platform</span>
+        <span class="value">AWS EKS</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Registry</span>
+        <span class="value">Amazon ECR</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Database</span>
+        <span class="value">RDS PostgreSQL</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Region</span>
+        <span class="value">us-east-1</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
