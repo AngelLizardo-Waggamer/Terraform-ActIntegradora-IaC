@@ -1,0 +1,24 @@
+replicaCount: 2
+
+image:
+  repository: tu-cuenta.dkr.ecr.us-east-1.amazonaws.com/quickinv-repo
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+# Variables de entorno para conectar con RDS
+env:
+  DB_HOST: "tu-rds-endpoint.us-east-1.rds.amazonaws.com"
+  DB_NAME: "appdb"
+  DB_USER: "appuser"
