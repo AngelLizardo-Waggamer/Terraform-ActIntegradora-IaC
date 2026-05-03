@@ -1,3 +1,13 @@
+terraform {
+  backend "s3" {
+    bucket         = "iac-infra-tfstate-bucket"
+    key            = "infra/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "iac-infra-tfstate-locks"
+    encrypt        = true
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }

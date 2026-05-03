@@ -6,7 +6,7 @@ image:
   tag: "latest"
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 80
 
 resources:
@@ -22,3 +22,4 @@ env:
   DB_HOST: "tu-rds-endpoint.us-east-1.rds.amazonaws.com"
   DB_NAME: "appdb"
   DB_USER: "appuser"
+  DB_PASSWORD: "postgresiac25"
