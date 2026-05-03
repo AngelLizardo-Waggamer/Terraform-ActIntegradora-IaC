@@ -1,0 +1,122 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy" to confirm infrastructure destruction'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: iac-infra-repo
+  EKS_CLUSTER_NAME: iac-infra-eks
+  S3_APP_BUCKET: iac-infra-app-bucket
+  S3_STATE_BUCKET: iac-infra-tfstate-bucket
+
+jobs:
+  destroy:
+    name: Destroy All Infrastructure
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'destroy'
+
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v3
+
+    - name: Configurar credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # --- 1. Remove Kubernetes resources (LoadBalancer ELBs) ---
+    - name: Eliminar recursos de Kubernetes
+      continue-on-error: true
+      run: |
+        echo "Updating kubeconfig..."
+        aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+        echo "Deleting Helm release..."
+        helm uninstall quickinv --namespace produccion || true
+
+        echo "Deleting all services in namespace (removes ELBs)..."
+        kubectl delete svc --all -n produccion || true
+
+        echo "Waiting 60s for AWS to de-provision ELBs..."
+        sleep 60
+
+    # --- 2. Empty ECR repository ---
+    - name: Vaciar repositorio ECR
+      continue-on-error: true
+      run: |
+        IMAGE_IDS=$(aws ecr list-images \
+          --repository-name ${{ env.ECR_REPOSITORY }} \
+          --region ${{ env.AWS_REGION }} \
+          --query 'imageIds[*]' \
+          --output json)
+
+        if [ "$IMAGE_IDS" != "[]" ] && [ -n "$IMAGE_IDS" ]; then
+          aws ecr batch-delete-image \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --region ${{ env.AWS_REGION }} \
+            --image-ids "$IMAGE_IDS"
+          echo "ECR images deleted."
+        else
+          echo "No images to delete."
+        fi
+
+    # --- 3. Empty S3 app bucket ---
+    - name: Vaciar bucket S3 de aplicación
+      continue-on-error: true
+      run: |
+        aws s3 rm s3://${{ env.S3_APP_BUCKET }} --recursive || true
+
+    # --- 4. Terraform destroy ---
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      working-directory: infra
+      run: terraform init
+
+    - name: Terraform Destroy
+      working-directory: infra
+      run: terraform destroy -auto-approve
+
+    # --- 5. Delete Terraform state bucket (last) ---
+    - name: Eliminar bucket de estado de Terraform
+      continue-on-error: true
+      run: |
+        echo "Removing all object versions..."
+        VERSIONS=$(aws s3api list-object-versions \
+          --bucket ${{ env.S3_STATE_BUCKET }} \
+          --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
+          --output json)
+
+        if [ "$VERSIONS" != '{"Objects":null}' ] && [ -n "$VERSIONS" ]; then
+          aws s3api delete-objects \
+            --bucket ${{ env.S3_STATE_BUCKET }} \
+            --delete "$VERSIONS"
+        fi
+
+        echo "Removing all delete markers..."
+        MARKERS=$(aws s3api list-object-versions \
+          --bucket ${{ env.S3_STATE_BUCKET }} \
+          --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' \
+          --output json)
+
+        if [ "$MARKERS" != '{"Objects":null}' ] && [ -n "$MARKERS" ]; then
+          aws s3api delete-objects \
+            --bucket ${{ env.S3_STATE_BUCKET }} \
+            --delete "$MARKERS"
+        fi
+
+        echo "Deleting the state bucket..."
+        aws s3api delete-bucket --bucket ${{ env.S3_STATE_BUCKET }} --region ${{ env.AWS_REGION }}
+
+        echo "State bucket deleted."
