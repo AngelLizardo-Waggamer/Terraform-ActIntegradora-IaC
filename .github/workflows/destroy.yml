@@ -33,12 +33,32 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     # --- 1. Remove Kubernetes resources (LoadBalancer ELBs) ---
-    - name: Eliminar recursos de Kubernetes
+    - name: Eliminar stack de monitoreo
       continue-on-error: true
       run: |
         echo "Updating kubeconfig..."
         aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
+        echo "Deleting monitoring stack..."
+        helm uninstall monitoring --namespace monitoring || true
+        kubectl delete svc --all -n monitoring || true
+        kubectl delete namespace monitoring || true
+
+        echo "Cleaning up Prometheus CRDs..."
+        kubectl delete crd alertmanagerconfigs.monitoring.coreos.com || true
+        kubectl delete crd alertmanagers.monitoring.coreos.com || true
+        kubectl delete crd podmonitors.monitoring.coreos.com || true
+        kubectl delete crd probes.monitoring.coreos.com || true
+        kubectl delete crd prometheusagents.monitoring.coreos.com || true
+        kubectl delete crd prometheuses.monitoring.coreos.com || true
+        kubectl delete crd prometheusrules.monitoring.coreos.com || true
+        kubectl delete crd scrapeconfigs.monitoring.coreos.com || true
+        kubectl delete crd servicemonitors.monitoring.coreos.com || true
+        kubectl delete crd thanosrulers.monitoring.coreos.com || true
+
+    - name: Eliminar aplicación QuickInv
+      continue-on-error: true
+      run: |
         echo "Deleting Helm release..."
         helm uninstall quickinv --namespace produccion || true
 

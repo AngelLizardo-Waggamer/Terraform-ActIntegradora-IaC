@@ -83,3 +83,17 @@ jobs:
           --set image.tag=${{ github.sha }} \
           --set env.DB_HOST=${{ env.RDS_ENDPOINT }} \
           --set env.DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+    # --- 4. Deploy monitoring stack (Prometheus + Grafana) ---
+    - name: Agregar repositorio Helm de Prometheus
+      run: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+
+    - name: Desplegar Prometheus y Grafana
+      run: |
+        helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+          --namespace monitoring --create-namespace \
+          -f ./infra/helm/monitoring-values.yaml \
+          --set grafana.adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+

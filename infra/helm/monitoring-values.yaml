@@ -1,0 +1,36 @@
+# Custom values for kube-prometheus-stack
+# Deployed via CI/CD pipeline into the 'monitoring' namespace
+
+# Grafana
+grafana:
+  adminPassword: ""  # Injected via --set from GitHub Secret GRAFANA_ADMIN_PASSWORD
+  service:
+    type: LoadBalancer
+  persistence:
+    enabled: false
+
+# Prometheus
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  service:
+    type: ClusterIP
+
+# Alertmanager — disabled for simplicity
+alertmanager:
+  enabled: false
+
+# Node Exporter — node-level metrics
+nodeExporter:
+  enabled: true
+
+# Kube State Metrics — K8s object metrics
+kubeStateMetrics:
+  enabled: true
